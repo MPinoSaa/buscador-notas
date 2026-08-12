@@ -1,1 +1,14 @@
-/* You can add global styles to this file, and also import other style files */
+/* Transición suave para el color de fondo general */
+body {
+  transition: background-color 0.3s ease;
+  margin: 0; /* Asegura que no queden bordes blancos en la pantalla */
+}
+
+/* El fondo oscuro de toda la página */
+body.dark-body {
+  background-color: #0f172a;
+}
+
+div:where(.swal2-container) {
+  font-family: system-ui, -apple-system, sans-serif !important;
+}

@@ -6,6 +6,7 @@ export interface Note {
   id?: string;
   title: string;
   content: string;
+  tag: string;
 }
 
 @Injectable({
@@ -36,7 +37,8 @@ export class NotesService {
       this.notes = snapshot.docs.map(doc => ({
         id: doc.id,
         title: doc.data()['title'],
-        content: doc.data()['content']
+        content: doc.data()['content'],
+        tag: doc.data()['tag'] || 'Sin definir'
       }));
       this.onDataChange(); // Realiza la actualización visual
     })
@@ -46,7 +48,8 @@ export class NotesService {
   async addNote(note: Note) {
     await addDoc(this.notesRef, {
       title: note.title,
-      content: note.content
+      content: note.content,
+      tag: note.tag
     });
   }
 
@@ -62,9 +65,9 @@ export class NotesService {
   }
 
   // Actualizar las notas
-  async updateNote(id: string, title: string, content: string) {
+  async updateNote(id: string, title: string, content: string, tag: string) {
     const noteRef = doc(this.db, 'notas', id);
-    await updateDoc(noteRef, { title, content });
+    await updateDoc(noteRef, { title, content, tag });
   }
 
   // Eliminar las notas

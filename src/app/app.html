@@ -10,6 +10,7 @@
     <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Buscar palabra, título o frase..." class="search-bar">
     
     <div class="upload-section">
+      <input type="text" [(ngModel)]="newTagToUpload" placeholder="Etiqueta (ej. Prodecimiento)" class="tag-input">
       <label for="file-upload" class="upload-btn">📁 Cargar mis Blocs de Notas (.txt)</label>
       <input id="file-upload" type="file" multiple accept=".txt" (change)="onFilesSelected($event)" class="hidden-input">
     </div>
@@ -19,7 +20,10 @@
     @for (note of notes; track note.id) {
       <!-- Agregamos el evento click a la tarjeta -->
       <article class="note-card" (click)="openNote(note)">
+        <div class="card-header">
         <h2>{{ note.title }}</h2>
+        <span class="tag-pill">{{ note.tag }}</span>
+        </div>
         <p>{{ note.content }}</p>
       </article>
     } @empty {
@@ -27,7 +31,6 @@
     }
   </section>
 
-  <!-- NUEVO: VENTANA MODAL (Basado en tu mockup) -->
   @if (selectedNote) {
     <div class="modal-overlay" (click)="closeNote()">
       <div class="modal-content" (click)="$event.stopPropagation()">
@@ -46,12 +49,14 @@
         
         <div class="modal-body">
           @if (isEditing) {
-            <!-- Modo Edición -->
             <input type="text" [(ngModel)]="selectedNote.title" class="edit-title-input" placeholder="Título de la nota">
+            <input type="text" [(ngModel)]="selectedNote.tag" class="edit-tag-input" placeholder="Etiqueta">
             <textarea [(ngModel)]="selectedNote.content" class="edit-content-textarea" placeholder="Escribe tu contenido aquí..."></textarea>
           } @else {
-            <!-- Modo Lectura -->
-            <h2 class="modal-title">{{ selectedNote.title }}</h2>
+            <div>
+              <h2 class="modal-title">{{ selectedNote.title }}</h2>
+              <span class="tag-pill large-pill">{{ selectedNote.tag }}</span>
+            </div>
             <p class="modal-text">{{ selectedNote.content }}</p>
           }
         </div>

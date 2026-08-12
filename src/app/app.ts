@@ -17,6 +17,7 @@ export class App implements OnInit{
   selectedNote: Note | null = null;
   isEditing = false;
   isDarkMode = false;
+  newTagToUpload = '';
 
   constructor(
     private notesService: NotesService,
@@ -31,7 +32,6 @@ export class App implements OnInit{
         document.body.classList.add('dark-body');
     }
   }
-
     this.onSearch(); // Cargamos las notas que bajo el Firebase  
     this.notesService.onDataChange = () => { // Se queda escuchando futuros cambios en tiempo real
       this.onSearch();
@@ -59,15 +59,31 @@ export class App implements OnInit{
   onFilesSelected(event: any) {
     const files: FileList = event.target.files;
     if (!files) return;
-    for (let i = 0; i < files.length; i++) { // Recorrer todos los archivos seleccionados
+
+    for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      const newTitle = file.name.replace('.txt', '')
+      const isDuplicate = this.notes.some(n => n.title.toLowerCase() === newTitle.toLocaleLowerCase())
+
+      if (isDuplicate) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: `Omitido: "${newTitle}" ya existe.`,
+          showConfirmButton: false,
+          timer: 3500
+        });
+        continue; 
+      }
       const reader = new FileReader();
-      // Cuando el archivo termina de leerse, ejecutamos esto:
       reader.onload = async (e: any) => {
         const newNote: Note = {
-          title: file.name.replace('.txt', ''), // Usamos el nombre del archivo sin la extensión
-          content: e.target.result // El contenido del .txt
+          title: newTitle,
+          content: e.target.result,
+          tag: this.newTagToUpload.trim() !== '' ? this.newTagToUpload.trim() : 'Sin definir'
         };
+
         await this.notesService.addNote(newNote);
 
         Swal.fire({
@@ -77,11 +93,12 @@ export class App implements OnInit{
           title: 'Nota cargada',
           showConfirmButton: false,
           timer: 1500
-        })
+        });
       };
       reader.readAsText(file);
     }
     event.target.value = '';
+    this.newTagToUpload = '';
   }
 
   // Vista detallada
@@ -102,7 +119,12 @@ export class App implements OnInit{
 
   async saveNote() {
     if (this.selectedNote && this.selectedNote.id) {
-      await this.notesService.updateNote(this.selectedNote.id, this.selectedNote.title, this.selectedNote.content);
+      await this.notesService.updateNote(
+        this.selectedNote.id, 
+        this.selectedNote.title, 
+        this.selectedNote.content,
+        this.selectedNote.tag
+      );
       this.isEditing = false;
 
       Swal.fire({

@@ -289,3 +289,90 @@ h1 {
 .dark-mode .icon-btn:hover {
   background: #475569;
 }
+
+/* --- Estilos de etiquetas (TAGS) --- */
+.upload-group {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tag-input {
+  padding: 10px 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 30px;
+  outline: none;
+  font-size: 14px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #f7fafc;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  gap: 10px;
+}
+
+.card-header h2 {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.tag-pill {
+  background-color: #e0e7ff;
+  color: #4338ca;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.large-pill {
+  font-size: 0.9rem;
+  padding: 6px 14px;
+}
+
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.modal-title-group h2 {
+  margin-bottom: 0;
+}
+
+.edit-tag-input {
+  font-size: 1rem;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  width: 100%;
+  outline: none;
+}
+
+/* Ajustes para el Modo Oscuro */
+.dark-mode .tag-input,
+.dark-mode .edit-tag-input {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+.dark-mode .card-header {
+  border-color: #334155;
+}
+
+.dark-mode .tag-pill {
+  background-color: #312e81;
+  color: #c7d2fe;
+}

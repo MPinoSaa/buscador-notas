@@ -10,19 +10,26 @@
     <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Buscar palabra, título o frase..." class="search-bar">
     
     <div class="upload-section">
-      <input type="text" [(ngModel)]="newTagToUpload" placeholder="Etiqueta (ej. Prodecimiento)" class="tag-input">
-      <label for="file-upload" class="upload-btn">📁 Cargar mis Blocs de Notas (.txt)</label>
+      <label for="file-upload" class="upload-btn">📁 Cargar mis Blocs (.txt)</label>
       <input id="file-upload" type="file" multiple accept=".txt" (change)="onFilesSelected($event)" class="hidden-input">
     </div>
+
+    @if (selectedTagFilter) {
+      <div class="active-filter-banner">
+        <span>Filtrado categoría: <strong>{{ selectedTagFilter }}</strong></span>
+        <button class="clear-filter-btn" (click)="clearTagFilter()" title="Quitar filtro">❌</button>
+      </div>
+    }
   </header>
 
   <section class="notes-grid">
-    @for (note of notes; track note.id) {
-      <!-- Agregamos el evento click a la tarjeta -->
+    @for (note of paginatedNotes; track note.id) {
       <article class="note-card" (click)="openNote(note)">
         <div class="card-header">
         <h2>{{ note.title }}</h2>
-        <span class="tag-pill">{{ note.tag }}</span>
+        <span class="tag-pill clickable-tag" (click)="filterByTag(note.tag, $event)" title="Filtrar por esta etiqueta">
+          {{ note.tag }}
+        </span>
         </div>
         <p>{{ note.content }}</p>
       </article>
@@ -30,6 +37,18 @@
       <div class="no-results"><p>No se encontraron notas con esa búsqueda.</p></div>
     }
   </section>
+
+  @if (totalPages > 1) {
+    <div class="pagination-controls">
+      <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+        ⬅️ Anterior
+      </button>
+      <span class="page-info">Página <strong>{{ currentPage }}</strong> de <strong>{{ totalPages }}</strong></span>
+      <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        Siguiente ➡️
+      </button>
+    </div>
+  }
 
   @if (selectedNote) {
     <div class="modal-overlay" (click)="closeNote()">

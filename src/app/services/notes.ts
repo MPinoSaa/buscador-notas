@@ -53,15 +53,21 @@ export class NotesService {
     });
   }
 
+  searchNotes(query: string, tagFilter: string = ''): Note[] {
+    let filtered = this.notes;
 
-  // Búsqueda local sobre los datos ya cargados
-  searchNotes(query: string): Note[] {
-    if (!query.trim()) return this.notes; // Si no hay búsqueda, devuelve todo
-    const lowerQuery = query.toLowerCase(); // Filtra buscando coincidencias en el título o en el contenido
-    return this.notes.filter(note => 
-      note.title.toLowerCase().includes(lowerQuery) || 
-      note.content.toLowerCase().includes(lowerQuery)
-    );
+    if (tagFilter) {
+      filtered = filtered.filter(note => note.tag === tagFilter);
+    }
+
+    if (query.trim()) {
+      const lowerQuery = query.toLowerCase();
+      filtered = filtered.filter(note =>
+        note.title.toLowerCase().includes(lowerQuery) ||
+        note.content.toLowerCase().includes(lowerQuery)
+      );
+    }
+    return filtered;
   }
 
   // Actualizar las notas

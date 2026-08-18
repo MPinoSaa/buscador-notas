@@ -1,0 +1,26 @@
+<div class="login-wrapper" [class.dark-mode]="isDarkMode">
+  <div class="login-card">
+    <div class="login-header">
+      <h2>Bienvenido</h2>
+      <p>Ingresa tus credenciales para continuar</p>
+    </div>
+    
+    <div class="login-body">
+      <input type="email" [(ngModel)]="loginEmail" placeholder="Correo electrónico" class="login-input" (keyup.enter)="onLogin()">
+      <input type="password" [(ngModel)]="loginPassword" placeholder="Contraseña" class="login-input" (keyup.enter)="onLogin()">
+      
+      <button class="login-submit-btn" (click)="onLogin()" [disabled]="isLoggingIn">
+        {{ isLoggingIn ? 'Iniciando...' : 'Ingresar' }}
+      </button>
+      <div style="margin-top: 20px;">
+        <a href="javascript:void(0)" (click)="solicitarCuenta()" style="color: #3b82f6; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
+            ¿No tienes cuenta? Solicita acceso aquí
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <button class="theme-toggle login-theme-btn" (click)="toggleDarkMode()">
+    {{ isDarkMode ? '☀️ Modo Claro' : '🌙 Modo Oscuro' }}
+  </button>
+</div>

@@ -9,17 +9,28 @@
 
     <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Buscar palabra, título o frase..." class="search-bar">
     
+    <div class="filter-bar">
+      <button 
+        class="filter-btn" 
+        [class.active]="selectedTagFilter === ''" 
+        (click)="setTagFilter('')">
+        TODOS
+      </button>
+      
+      @for (tag of standardTags; track tag) {
+        <button 
+          class="filter-btn" 
+          [class.active]="selectedTagFilter === tag" 
+          (click)="setTagFilter(tag)">
+          {{ tag }}
+        </button>
+      }
+    </div>
+
     <div class="upload-section">
       <label for="file-upload" class="upload-btn">📁 Cargar mis Blocs (.txt)</label>
       <input id="file-upload" type="file" multiple accept=".txt" (change)="onFilesSelected($event)" class="hidden-input">
     </div>
-
-    @if (selectedTagFilter) {
-      <div class="active-filter-banner">
-        <span>Filtrado categoría: <strong>{{ selectedTagFilter }}</strong></span>
-        <button class="clear-filter-btn" (click)="clearTagFilter()" title="Quitar filtro">❌</button>
-      </div>
-    }
   </header>
 
   <section class="notes-grid">

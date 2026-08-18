@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NotesService, Note } from './services/notes';
 import Swal from 'sweetalert2';
@@ -17,19 +17,19 @@ export class App implements OnInit {
   selectedNote: Note | null = null;
   isEditing = false;
   isDarkMode = false;
+  
   selectedTagFilter = '';
-
-  // Variables para la paginación
+  standardTags = ['PROCEDIMIENTOS', 'SERVIDORES', 'INSTRUCTIVOS', 'OTROS'];
+  
   currentPage = 1;
-  itemsPerPage = 10;
+  itemsPerPage = 9;
 
+  // 1. Devolvemos el ChangeDetectorRef
   constructor(
-    private notesService: NotesService, 
-    private cdr: ChangeDetectorRef,
-    private zone: NgZone
+    private notesService: NotesService,
+    private cdr: ChangeDetectorRef 
   ) {}
 
-  // --- GETTERS DE PAGINACIÓN ---
   get totalPages(): number {
     return Math.ceil(this.notes.length / this.itemsPerPage) || 1;
   }
@@ -39,25 +39,22 @@ export class App implements OnInit {
     return this.notes.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
-  // --- INICIO Y CONFIGURACIÓN ---
   ngOnInit() {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      const savedTheme = localStorage.getItem('darkMode');
-      if (savedTheme === 'true') {
-        this.isDarkMode = true;
-        document.body.classList.add('dark-body');
-      }
-    }
-
+    this.checkDarkMode();
     this.onSearch(); 
     
-    // Vigila los cambios en la base de datos en tiempo real
+    // 2. Le ordenamos a Angular que repinte la pantalla apenas lleguen los datos
     this.notesService.onDataChange = () => {
-      this.zone.run(() => {
-        this.onSearch();
-        this.cdr.detectChanges();
-      });
+      this.onSearch();
+      this.cdr.detectChanges(); 
     };
+  }
+
+  private checkDarkMode() {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      this.isDarkMode = localStorage.getItem('darkMode') === 'true';
+      if (this.isDarkMode) document.body.classList.add('dark-body');
+    }
   }
 
   toggleDarkMode() {
@@ -65,23 +62,23 @@ export class App implements OnInit {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       localStorage.setItem('darkMode', this.isDarkMode.toString());
     }
-    if (this.isDarkMode) {
-      document.body.classList.add('dark-body');
-    } else {
-      document.body.classList.remove('dark-body');
-    }
+    document.body.classList.toggle('dark-body', this.isDarkMode);
   }
 
   // --- BÚSQUEDA Y FILTROS ---
   onSearch() {
     this.notes = this.notesService.searchNotes(this.searchTerm, this.selectedTagFilter);
-    this.currentPage = 1; // Vuelve a la página 1 al buscar
+    this.currentPage = 1; 
+  }
+
+  setTagFilter(tag: string) {
+    this.selectedTagFilter = this.selectedTagFilter === tag ? '' : tag;
+    this.onSearch();
   }
 
   filterByTag(tag: string, event: Event) {
     event.stopPropagation();
-    this.selectedTagFilter = tag;
-    this.onSearch();
+    this.setTagFilter(tag);
   }
 
   clearTagFilter() {
@@ -90,17 +87,8 @@ export class App implements OnInit {
   }
 
   // --- CONTROLES DE PAGINACIÓN ---
-  nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-    }
-  }
-
-  previousPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-    }
-  }
+  nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
+  previousPage() { if (this.currentPage > 1) this.currentPage--; }
 
   // --- SUBIDA DE ARCHIVOS ---
   async onFilesSelected(event: any) {
@@ -114,55 +102,57 @@ export class App implements OnInit {
       const file = files[i];
       const newTitle = file.name.replace('.txt', '');
       
-      const isDuplicate = this.notes.some(n => n.title.toLowerCase() === newTitle.toLowerCase());
-      if (isDuplicate) {
+      if (this.notes.some(n => n.title.toLowerCase() === newTitle.toLowerCase())) {
         duplicatedCount++;
         continue;
       }
 
       const { value: tagValue, isDismissed } = await Swal.fire({
         title: 'Asignar Etiqueta',
-        text: `¿Qué etiqueta deseas para la nota: "${newTitle}"?`,
-        input: 'text',
-        inputPlaceholder: 'Ej. Procedimientos, Servidores...',
+        text: `¿Qué categoría describe mejor a: "${newTitle}"?`,
+        input: 'select',
+        inputOptions: {
+          'PROCEDIMIENTOS': 'Procedimientos',
+          'SERVIDORES': 'Servidores',
+          'INSTRUCTIVOS': 'Instructivos',
+          'OTROS': 'Otros'
+        },
+        inputPlaceholder: 'Selecciona una categoría...',
         showCancelButton: true,
         confirmButtonText: 'Subir archivo',
         cancelButtonText: 'Omitir archivo',
         confirmButtonColor: '#3b82f6',
-        cancelButtonColor: '#ef4444'
+        cancelButtonColor: '#ef4444',
+        inputValidator: (value) => value ? null : 'Debes seleccionar una etiqueta para continuar'
       });
 
       if (isDismissed) continue;
 
-      const finaltag = (tagValue && tagValue.trim() !== '') ? tagValue.trim() : 'Sin definir'; 
-
-      await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = async (e: any) => {
-          const newNote: Note = { title: newTitle, content: e.target.result, tag: finaltag };
-          await this.notesService.addNote(newNote);
-          uploadedCount++;
-          resolve(true);
-        };
-        reader.readAsText(file);
-      });
+      const content = await this.readFileAsync(file);
+      await this.notesService.addNote({ title: newTitle, content, tag: tagValue });
+      uploadedCount++;
     }
 
     event.target.value = ''; 
+    this.showUploadSummary(uploadedCount, duplicatedCount);
+  }
 
-    if (uploadedCount > 0 && duplicatedCount === 0) {
-      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `${uploadedCount} nota(s) cargada(s)`, showConfirmButton: false, timer: 2500 });
-    } else if (uploadedCount > 0 && duplicatedCount > 0) {
-      Swal.fire({ icon: 'info', title: 'Carga parcial', text: `Se subieron ${uploadedCount} notas. Se omitieron ${duplicatedCount} duplicadas.` });
-    } else if (uploadedCount === 0 && duplicatedCount > 0) {
+  private readFileAsync(file: File): Promise<string> {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e: any) => resolve(e.target.result);
+      reader.readAsText(file);
+    });
+  }
+
+  private showUploadSummary(uploaded: number, duplicated: number) {
+    if (uploaded > 0 && duplicated === 0) {
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `${uploaded} nota(s) cargada(s)`, showConfirmButton: false, timer: 2500 });
+    } else if (uploaded > 0 && duplicated > 0) {
+      Swal.fire({ icon: 'info', title: 'Carga parcial', text: `Se subieron ${uploaded} notas. Se omitieron ${duplicated} duplicadas.` });
+    } else if (uploaded === 0 && duplicated > 0) {
       Swal.fire({ icon: 'warning', title: 'Archivos Duplicados', text: 'No se subió nada. Todos los archivos ya existen.' });
     }
-
-    // FORZAMOS A ANGULAR A REPINTAR LA PAGINACIÓN INMEDIATAMENTE
-    this.zone.run(() => {
-      this.onSearch();
-      this.cdr.detectChanges();
-    });
   }
 
   // --- GESTIÓN DEL MODAL (VER, EDITAR, ELIMINAR) ---
@@ -172,11 +162,9 @@ export class App implements OnInit {
   }
 
   closeNote() {
-    this.zone.run(() => {
-      this.selectedNote = null;
-      this.isEditing = false;
-      this.cdr.detectChanges();
-    });
+    this.selectedNote = null;
+    this.isEditing = false;
+    this.cdr.detectChanges(); // 3. Forzamos cierre visual
   }
 
   toggleEdit() {
@@ -185,38 +173,31 @@ export class App implements OnInit {
 
   async saveNote() {
     if (this.selectedNote && this.selectedNote.id) {
-      await this.notesService.updateNote(
-        this.selectedNote.id, 
-        this.selectedNote.title, 
-        this.selectedNote.content,
-        this.selectedNote.tag
-      );
+      await this.notesService.updateNote(this.selectedNote.id, this.selectedNote.title, this.selectedNote.content, this.selectedNote.tag);
       this.isEditing = false;
       Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'La nota se ha actualizado correctamente.', timer: 2000, showConfirmButton: false });
     }
   }
 
   async deleteSelectedNote() {
-    if (this.selectedNote && this.selectedNote.id) {
-      const result = await Swal.fire({
-        title: '¿Estás seguro?',
-        text: "Esta acción no se puede deshacer.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#3b82f6',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      });
+    if (!this.selectedNote || !this.selectedNote.id) return;
 
-      if (result.isConfirmed) {
-        this.zone.run(async () => {
-          const idToDelete = this.selectedNote!.id!;
-          this.closeNote(); 
-          await this.notesService.deleteNote(idToDelete);
-          Swal.fire('¡Eliminada!', 'Tu nota ha sido borrada.', 'success');
-        });
-      }
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Esta acción no se puede deshacer.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#3b82f6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      const idToDelete = this.selectedNote.id;
+      this.closeNote(); 
+      await this.notesService.deleteNote(idToDelete);
+      Swal.fire('¡Eliminada!', 'Tu nota ha sido borrada.', 'success');
     }
   }
 }

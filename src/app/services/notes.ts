@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
@@ -27,30 +27,29 @@ export class NotesService {
     appId: "1:748370186114:web:23b95c89bea7e6cbe1099b"
   };
 
-  constructor () {
-    const app = initializeApp(this.firebaseConfig); // Inicializar conexión al proyecto
-    this.db = getFirestore(app); // Conectar a la base de datos Firestore
-    this.notesRef = collection(this.db, 'notas'); // Apuntamos a una "colección" llamada 'notas'
+  // 1. Inyectamos NgZone aquí
+  constructor (private zone: NgZone) {
+    const app = initializeApp(this.firebaseConfig); 
+    this.db = getFirestore(app); 
+    this.notesRef = collection(this.db, 'notas'); 
 
-    // Escuchar la nube en tiempo real
+    // 2. Envolvemos la escucha de Firebase en la Zona de Angular.
+    // Esto garantiza que CUALQUIER cambio en BD repinte la pantalla instantáneamente.
     onSnapshot(this.notesRef, (snapshot) => {
-      this.notes = snapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data()['title'],
-        content: doc.data()['content'],
-        tag: doc.data()['tag'] || 'Sin definir'
-      }));
-      this.onDataChange(); // Realiza la actualización visual
-    })
+      this.zone.run(() => {
+        this.notes = snapshot.docs.map(doc => ({
+          id: doc.id,
+          title: doc.data()['title'],
+          content: doc.data()['content'],
+          tag: doc.data()['tag'] || 'Sin definir'
+        }));
+        this.onDataChange(); 
+      });
+    });
   }
 
-  // Guardar notas en Firebase
   async addNote(note: Note) {
-    await addDoc(this.notesRef, {
-      title: note.title,
-      content: note.content,
-      tag: note.tag
-    });
+    await addDoc(this.notesRef, { title: note.title, content: note.content, tag: note.tag });
   }
 
   searchNotes(query: string, tagFilter: string = ''): Note[] {
@@ -70,13 +69,11 @@ export class NotesService {
     return filtered;
   }
 
-  // Actualizar las notas
   async updateNote(id: string, title: string, content: string, tag: string) {
     const noteRef = doc(this.db, 'notas', id);
     await updateDoc(noteRef, { title, content, tag });
   }
 
-  // Eliminar las notas
   async deleteNote(id: string) {
     const noteRef = doc(this.db, 'notas', id);
     await deleteDoc(noteRef);

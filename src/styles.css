@@ -1,10 +1,8 @@
-/* Transición suave para el color de fondo general */
 body {
   transition: background-color 0.3s ease;
-  margin: 0; /* Asegura que no queden bordes blancos en la pantalla */
+  margin: 0;
 }
 
-/* El fondo oscuro de toda la página */
 body.dark-body {
   background-color: #0f172a;
 }

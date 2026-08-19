@@ -66,6 +66,10 @@ export class NotasComponent implements OnInit {
     }
   }
 
+  irAlAdmin() {
+    this.router.navigate(['/admin']);
+  }
+
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
@@ -217,7 +221,19 @@ export class NotasComponent implements OnInit {
   }
 
   async onLogout() {
-    await this.authService.logout();
-    this.router.navigate(['/login'])
+    const result = await Swal.fire({
+      title: '¿Cerrar sesión?',
+      text: 'Tendrás que volver a ingresar tu correo y contraseña para acceder.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Sí, salir',
+      cancelButtonText: 'Cancelar'
+    })
+    if (result.isConfirmed) {
+      await this.authService.logout();
+      this.router.navigate(['/login'])
+    }
   }
 }

@@ -4,6 +4,12 @@
       <h1>Buscador de Notas</h1>
 
       <div class="header-actions">
+        @if (isSuperAdmin) {
+          <button class="theme-toggle" (click)="irAlAdmin()" title="Panel de Administración" style="background-color: #3b82f6; color: white;">
+            ⚙️ Panel Admin
+          </button>
+        }
+
       <button class="theme-toggle" (click)="toggleDarkMode()" [title]="isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
         {{ isDarkMode ? '☀️ Claro' : '🌙 Oscuro' }}
       </button>

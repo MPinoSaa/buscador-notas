@@ -1,0 +1,80 @@
+<main class="container" [class.dark-mode]="isDarkMode">
+  <header class="admin-header">
+    <div class="header-actions">
+      <button class="back-btn" (click)="volverInicio()">⬅️ Volver al Buscador</button>
+      <h1>Panel de Súper Administrador</h1>
+    </div>
+  </header>
+
+  <section class="admin-section">
+    <h2>📩 Solicitudes de Acceso</h2>
+    <div class="table-container">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Fecha</th><th>Nombre</th><th>Correo</th><th>Motivo</th><th>Estado</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (solicitud of solicitudes; track solicitud.id) {
+            <tr>
+              <td>{{ solicitud.fecha | date:'shortDate' }}</td>
+              <td><strong>{{ solicitud.nombre }}</strong></td>
+              <td>{{ solicitud.correo }}</td>
+              <td>{{ solicitud.motivo }}</td>
+              <td>
+                <span class="badge" [class.badge-pending]="solicitud.estado === 'pendiente'" [class.badge-approved]="solicitud.estado === 'Aprobada'">
+                  {{ solicitud.estado | uppercase }}
+                </span>
+              </td>
+              <td class="action-cells">
+                @if (solicitud.estado === 'pendiente') {
+                  <button class="btn-sm btn-success" (click)="marcarAprobada(solicitud.id)" title="Marcar como listo">✔️</button>
+                }
+                <button class="btn-sm btn-danger" (click)="eliminarSolicitud(solicitud.id)" title="Eliminar registro">🗑️</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="text-center">No hay solicitudes pendientes.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="admin-section">
+    <div class="section-header">
+      <h2>🗂️ Gestión de Notas (Borrado Masivo)</h2>
+      <button class="btn-danger-large" (click)="borrarNotasSeleccionadas()" [disabled]="notasSeleccionadas.size === 0">
+        🗑️ Borrar {{ notasSeleccionadas.size }} seleccionadas
+      </button>
+    </div>
+    
+    <div class="table-container">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">Sel.</th>
+            <th>Título</th>
+            <th>Etiqueta</th>
+            <th>Subido por</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (nota of notas; track nota.id) {
+            <tr [class.selected-row]="notasSeleccionadas.has(nota.id!)">
+              <td class="text-center">
+                <input type="checkbox" class="large-checkbox" 
+                       [checked]="notasSeleccionadas.has(nota.id!)" 
+                       (change)="toggleSeleccion(nota.id!)">
+              </td>
+              <td><strong>{{ nota.title }}</strong></td>
+              <td><span class="tag-pill">{{ nota.tag }}</span></td>
+              <td style="color: #64748b;">{{ nota.creatorEmail || 'desconocido' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

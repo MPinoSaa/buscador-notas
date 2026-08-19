@@ -12,9 +12,13 @@
       <button class="login-submit-btn" (click)="onLogin()" [disabled]="isLoggingIn">
         {{ isLoggingIn ? 'Iniciando...' : 'Ingresar' }}
       </button>
-      <div style="margin-top: 20px;">
+      <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 15px;">
+        <a href="javascript:void(0)" (click)="recuperarPassword()" style="color: #64748b; text-decoration: underline; font-size: 0.9rem; transition: color 0.3s;">
+          ¿Olvidaste tu contraseña?
+        </a>
+
         <a href="javascript:void(0)" (click)="solicitarCuenta()" style="color: #3b82f6; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
-            ¿No tienes cuenta? Solicita acceso aquí
+          ¿No tienes cuenta? Solicita acceso aquí
         </a>
       </div>
     </div>

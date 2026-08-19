@@ -1,6 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User, sendPasswordResetEmail } from 'firebase/auth';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
@@ -62,5 +62,10 @@ export class AuthService {
     const user = this.currentUser;
     // Por ahora lo atamos a tu correo de prueba, luego podemos usar una BD de roles
     return user?.email === 'admin@admin.com';
+  }
+
+  // Función para enviar correo de recuperación de contraseña
+  async resetPassword(email: string) {
+    await sendPasswordResetEmail(this.auth, email);
   }
 }

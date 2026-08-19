@@ -84,8 +84,8 @@
                 <button class="icon-btn edit-btn" (click)="toggleEdit()" title="Editar">✏️ Editar</button>
               }
             }
-            
-            @if (isSuperAdmin) {
+
+            @if (isSuperAdmin || currentUserEmail === selectedNote.creatorEmail) {
               <button class="icon-btn delete-btn" (click)="deleteSelectedNote()" title="Eliminar">🗑️</button>
             }
             

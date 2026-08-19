@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { NotesService, Note } from '../../services/notes';
 import { AuthService } from '../../services/auth';
 import Swal from 'sweetalert2';
+import { getAuth } from 'firebase/auth';
 
 @Component({
   selector: 'app-notas',
@@ -24,8 +25,9 @@ export class NotasComponent implements OnInit {
   itemsPerPage = 9;
 
   get currentUserEmail(): string | null {
-    return this.authService.currentUser?.email || null;
-  }
+  const auth = getAuth();
+  return auth.currentUser?.email || null;
+}
 
   get isSuperAdmin(): boolean {
     return this.authService.isSuperAdmin();

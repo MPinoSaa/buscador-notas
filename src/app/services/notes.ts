@@ -42,7 +42,8 @@ export class NotesService {
           id: doc.id,
           title: doc.data()['title'],
           content: doc.data()['content'],
-          tag: doc.data()['tag'] || 'Sin definir'
+          tag: doc.data()['tag'] || 'Sin definir',
+          creatorEmail: doc.data()['creatorEmail']
         }));
         this.onDataChange(); 
       });
@@ -50,7 +51,16 @@ export class NotesService {
   }
 
   async addNote(note: Note) {
-    await addDoc(this.notesRef, { title: note.title, content: note.content, tag: note.tag });
+    try {
+      const docRef = await addDoc(collection(this.db, 'notas'), {
+        title: note.title,
+        content: note.content,
+        tag: note.tag,
+        creatorEmail: note.creatorEmail || 'desconocido' 
+      });
+    } catch (error) {
+      console.error("Error agregando nota: ", error);
+    }
   }
 
   searchNotes(query: string, tagFilter: string = ''): Note[] {

@@ -1,4 +1,4 @@
-<div class="login-wrapper" [class.dark-mode]="isDarkMode">
+<div class="login-wrapper" [class.dark-mode]="isDarkMode()">
   <div class="login-card">
     <div class="login-header">
       <h2>Bienvenido</h2>
@@ -25,6 +25,6 @@
   </div>
   
   <button class="theme-toggle login-theme-btn" (click)="toggleDarkMode()">
-    {{ isDarkMode ? '☀️ Modo Claro' : '🌙 Modo Oscuro' }}
+    {{ isDarkMode() ? '☀️ Modo Claro' : '🌙 Modo Oscuro' }}
   </button>
 </div>

@@ -2,6 +2,9 @@
 
 # Compiled output
 /dist
+
+# Caché local de Firebase Hosting
+.firebase/
 /tmp
 /out-tsc
 /bazel-out

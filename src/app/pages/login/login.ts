@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ThemeService } from '../../services/theme';
 import { AuthService } from '../../services/auth'; // Revisa que la ruta sea correcta
 import Swal from 'sweetalert2';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../firestore';
 
 @Component({
   selector: 'app-login',
@@ -16,16 +18,13 @@ export class LoginComponent {
   loginEmail = '';
   loginPassword = '';
   isLoggingIn = false;
-  isDarkMode = false; 
+  private theme = inject(ThemeService);
+  isDarkMode = this.theme.dark;
 
   constructor(
     private authService: AuthService, 
     private router: Router
   ) {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      this.isDarkMode = localStorage.getItem('darkMode') === 'true';
-      if (this.isDarkMode) document.body.classList.add('dark-body');
-    }
   }
 
   async onLogin() {
@@ -76,7 +75,6 @@ export class LoginComponent {
 
     if (formValues) {
       try {
-        const db = getFirestore();
         const solicitudesRef = collection(db, 'solicitudes');
         await addDoc(solicitudesRef, {
           nombre: formValues.nombre,
@@ -99,11 +97,7 @@ export class LoginComponent {
   }
 
   toggleDarkMode() {
-    this.isDarkMode = !this.isDarkMode;
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      localStorage.setItem('darkMode', this.isDarkMode.toString());
-    }
-    document.body.classList.toggle('dark-body', this.isDarkMode);
+    this.theme.toggle();
   }
 
   async recuperarPassword() {

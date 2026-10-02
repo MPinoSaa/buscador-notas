@@ -1,8 +1,10 @@
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { getFirestore, collection, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { NotesService, Note } from '../../services/notes';
+import { collection, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firestore';
+import { ThemeService } from '../../services/theme';
+import { NotesService } from '../../services/notes';
 import Swal from 'sweetalert2';
 
 interface Solicitud {
@@ -21,13 +23,14 @@ interface Solicitud {
   templateUrl: './admin.html',
   styleUrls: ['./admin.css']
 })
-export class AdminComponent implements OnInit {
+export class AdminComponent implements OnInit, OnDestroy {
   solicitudes: Solicitud[] = [];
-  notas: Note[] = [];
+  readonly notas = inject(NotesService).notes;
   notasSeleccionadas: Set<string> = new Set();
-  
-  db = getFirestore();
-  isDarkMode = false;
+  private unsubscribeSolicitudes?: () => void;
+
+  db = db;
+  readonly isDarkMode = inject(ThemeService).dark;
 
   constructor(
     private notesService: NotesService,
@@ -37,13 +40,8 @@ export class AdminComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      this.isDarkMode = localStorage.getItem('darkMode') === 'true';
-      if (this.isDarkMode) document.body.classList.add('dark-body');
-    }
-
     const solicitudesRef = collection(this.db, 'solicitudes');
-    onSnapshot(solicitudesRef, (snapshot) => {
+    this.unsubscribeSolicitudes = onSnapshot(solicitudesRef, (snapshot) => {
       this.zone.run(() => {
         this.solicitudes = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Solicitud))
                             .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
@@ -51,11 +49,10 @@ export class AdminComponent implements OnInit {
       });
     });
 
-    this.notas = this.notesService.searchNotes('');
-    this.notesService.onDataChange = () => {
-      this.notas = this.notesService.searchNotes('');
-      this.cdr.detectChanges();
-    };
+  }
+
+  ngOnDestroy() {
+    this.unsubscribeSolicitudes?.();
   }
 
   volverInicio() {
@@ -68,6 +65,15 @@ export class AdminComponent implements OnInit {
   }
 
   async eliminarSolicitud(id: string) {
+    const result = await Swal.fire({
+      title: '¿Eliminar solicitud?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Sí, eliminar'
+    });
+    if (!result.isConfirmed) return;
     await deleteDoc(doc(this.db, 'solicitudes', id));
   }
 
@@ -93,11 +99,14 @@ export class AdminComponent implements OnInit {
     });
 
     if (result.isConfirmed) {
-      for (const id of this.notasSeleccionadas) {
-        await this.notesService.deleteNote(id);
+      try {
+        await this.notesService.deleteNotes([...this.notasSeleccionadas]);
+        this.notasSeleccionadas.clear();
+        Swal.fire('¡Eliminadas!', 'Las notas seleccionadas fueron borradas.', 'success');
+      } catch (error) {
+        console.error('Error borrando notas:', error);
+        Swal.fire('Error', 'No se pudieron borrar las notas. Intenta de nuevo.', 'error');
       }
-      this.notasSeleccionadas.clear();
-      Swal.fire('¡Eliminadas!', 'Las notas seleccionadas fueron borradas.', 'success');
     }
   }
 }

@@ -1,21 +1,21 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase';
 
-export const authGuard: CanActivateFn = (route, state) => {
+export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
-  const auth = getAuth();
 
   return new Promise((resolve) => {
     // Escuchamos el estado de Firebase una sola vez al intentar entrar
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      unsubscribe(); // Dejamos de escuchar inmediatamente para ahorrar memoria
-      
+      unsubscribe();
+
       if (user) {
-        resolve(true); // ¡Adelante, puedes pasar!
+        resolve(true);
       } else {
-        router.navigate(['/login']); // Te expulso al login
-        resolve(false); 
+        router.navigate(['/login']);
+        resolve(false);
       }
     });
   });

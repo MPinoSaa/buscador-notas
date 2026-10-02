@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Debe coincidir con AuthService.isSuperAdmin()
+    function isAdmin() {
+      return signedIn() && request.auth.token.email == 'admin@admin.com';
+    }
+
+    match /notas/{noteId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.creatorEmail == request.auth.token.email
+        && request.resource.data.title is string
+        && request.resource.data.content is string
+        && request.resource.data.content.size() < 1000000;
+      allow update, delete: if isAdmin()
+        || (signedIn() && resource.data.creatorEmail == request.auth.token.email);
+    }
+
+    // Cualquiera puede solicitar acceso; solo el admin las gestiona
+    match /solicitudes/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['nombre', 'correo', 'motivo', 'fecha', 'estado'])
+        && request.resource.data.nombre is string && request.resource.data.nombre.size() < 200
+        && request.resource.data.correo is string && request.resource.data.correo.size() < 200
+        && request.resource.data.motivo is string && request.resource.data.motivo.size() < 2000;
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

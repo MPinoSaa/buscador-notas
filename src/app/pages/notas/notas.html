@@ -1,36 +1,36 @@
-<main class="container" [class.dark-mode]="isDarkMode">
+<main class="container" [class.dark-mode]="isDarkMode()">
   <header>
     <div class="header-top">
       <h1>Buscador de Notas</h1>
 
       <div class="header-actions">
-        @if (isSuperAdmin) {
+        @if (isSuperAdmin()) {
           <button class="theme-toggle" (click)="irAlAdmin()" title="Panel de Administración" style="background-color: #3b82f6; color: white;">
             ⚙️ Panel Admin
           </button>
         }
 
-      <button class="theme-toggle" (click)="toggleDarkMode()" [title]="isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
-        {{ isDarkMode ? '☀️ Claro' : '🌙 Oscuro' }}
+      <button class="theme-toggle" (click)="toggleDarkMode()" [title]="isDarkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
+        {{ isDarkMode() ? '☀️ Claro' : '🌙 Oscuro' }}
       </button>
       <button class="logout-btn" (click)="onLogout()">🚪 Salir</button>
       </div>
     </div>
 
-    <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Buscar palabra, título o frase..." class="search-bar">
+    <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearch()" aria-label="Buscar notas" placeholder="Buscar palabra, título o frase..." class="search-bar">
     
     <div class="filter-bar">
       <button 
         class="filter-btn" 
-        [class.active]="selectedTagFilter === ''" 
+        [class.active]="selectedTagFilter() === ''" 
         (click)="setTagFilter('')">
         TODOS
       </button>
       
-      @for (tag of standardTags; track tag) {
+      @for (tag of filterTags(); track tag) {
         <button 
           class="filter-btn" 
-          [class.active]="selectedTagFilter === tag" 
+          [class.active]="selectedTagFilter() === tag" 
           (click)="setTagFilter(tag)">
           {{ tag }}
         </button>
@@ -38,72 +38,120 @@
     </div>
 
     <div class="upload-section">
+      <button type="button" class="upload-btn" (click)="createNote()">➕ Nueva nota</button>
       <label for="file-upload" class="upload-btn">📁 Cargar mis Blocs (.txt)</label>
       <input id="file-upload" type="file" multiple accept=".txt" (change)="onFilesSelected($event)" class="hidden-input">
     </div>
   </header>
 
   <section class="notes-grid">
-    @for (note of paginatedNotes; track note.id) {
-      <article class="note-card" (click)="openNote(note)">
+    @for (card of cards(); track card.note.id) {
+      @let note = card.note;
+      <article class="note-card" tabindex="0" role="button" [attr.aria-label]="'Abrir nota ' + note.title" (click)="openNote(note)" (keydown.enter)="openNote(note)">
         <div class="card-header">
-        <h2>{{ note.title }}</h2>
+        <h2>@for (p of card.title; track $index) { @if (p.match) { <mark>{{ p.text }}</mark> } @else { {{ p.text }} } }</h2>
         <span class="tag-pill clickable-tag" (click)="filterByTag(note.tag, $event)" title="Filtrar por esta etiqueta">
           {{ note.tag }}
         </span>
         </div>
-        <p>{{ note.content }}</p>
+        <p>@for (p of card.excerpt; track $index) { @if (p.match) { <mark>{{ p.text }}</mark> } @else { {{ p.text }} } }</p>
       </article>
     } @empty {
-      <div class="no-results"><p>No se encontraron notas con esa búsqueda.</p></div>
+      @if (!loaded()) {
+        <div class="no-results" role="status"><p>Cargando notas...</p></div>
+      } @else if (loadError()) {
+        <div class="no-results" role="alert"><p>No se pudieron cargar las notas. Revisa tu conexión o permisos.</p></div>
+      } @else {
+        <div class="no-results"><p>No se encontraron notas con esa búsqueda.</p></div>
+      }
     }
   </section>
 
-  @if (totalPages > 1) {
+  @if (totalPages() > 1) {
     <div class="pagination-controls">
-      <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+      <button class="page-btn" (click)="previousPage()" [disabled]="page() === 1">
         ⬅️ Anterior
       </button>
-      <span class="page-info">Página <strong>{{ currentPage }}</strong> de <strong>{{ totalPages }}</strong></span>
-      <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+      <span class="page-info">Página <strong>{{ page() }}</strong> de <strong>{{ totalPages() }}</strong></span>
+      <button class="page-btn" (click)="nextPage()" [disabled]="page() === totalPages()">
         Siguiente ➡️
       </button>
     </div>
   }
 
-  @if (selectedNote) {
+  @if (selectedNote(); as note) {
     <div class="modal-overlay" (click)="closeNote()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-label="Detalle de la nota" (click)="$event.stopPropagation()">
         
         <div class="modal-header">
           <div class="modal-actions">
-            @if (isEditing) {
+            @if (isEditing()) {
               <button class="icon-btn save-btn" (click)="saveNote()" title="Guardar">💾 Guardar</button>
             } @else {
-              @if (isSuperAdmin || currentUserEmail === selectedNote.creatorEmail) {
+              @if (canModify() && note.id) {
                 <button class="icon-btn edit-btn" (click)="toggleEdit()" title="Editar">✏️ Editar</button>
+                <button class="icon-btn ai-btn" (click)="improveWithAi()" [disabled]="aiLoading() || aiPreview() !== null"
+                        title="Reestructura la nota como procedimiento o instructivo y te muestra una propuesta">
+                  {{ aiLoading() ? '⏳ Ajustando… ' + aiElapsed() + ' s' : '✨ Ajustar con IA' }}
+                </button>
               }
             }
 
-            @if (isSuperAdmin || currentUserEmail === selectedNote.creatorEmail) {
-              <button class="icon-btn delete-btn" (click)="deleteSelectedNote()" title="Eliminar">🗑️</button>
+            @if (canModify() && note.id) {
+              <button class="icon-btn delete-btn" (click)="deleteSelectedNote()" title="Eliminar" aria-label="Eliminar nota">🗑️</button>
             }
             
-            <button class="icon-btn close-btn" (click)="closeNote()" title="Cerrar">❌</button>
+            @if (note.id && !isEditing()) {
+              <button class="icon-btn" (click)="copyNote()" title="Copiar contenido" aria-label="Copiar contenido">📋</button>
+              <button class="icon-btn" (click)="downloadNote()" title="Descargar como .txt" aria-label="Descargar como .txt">⬇️</button>
+            }
+            <button class="icon-btn close-btn" (click)="closeNote()" title="Cerrar" aria-label="Cerrar">❌</button>
           </div>
         </div>
         
         <div class="modal-body">
-          @if (isEditing) {
-            <input type="text" [(ngModel)]="selectedNote.title" class="edit-title-input" placeholder="Título de la nota">
-            <input type="text" [(ngModel)]="selectedNote.tag" class="edit-tag-input" placeholder="Etiqueta">
-            <textarea [(ngModel)]="selectedNote.content" class="edit-content-textarea" placeholder="Escribe tu contenido aquí..."></textarea>
+          @if (isEditing()) {
+            <input type="text" [ngModel]="editTitle()" (ngModelChange)="editTitle.set($event)" class="edit-title-input" placeholder="Título de la nota" aria-label="Título">
+            <label class="field-label" for="edit-tag">Categoría</label>
+            <select id="edit-tag" class="edit-tag-input" [ngModel]="customTag() ? '__nueva__' : editTag()" (ngModelChange)="onTagSelect($event)">
+              @for (t of filterTags(); track t) { <option [value]="t">{{ t }}</option> }
+              <option value="__nueva__">➕ Nueva etiqueta…</option>
+            </select>
+            @if (customTag()) {
+              <input type="text" class="edit-tag-input" [ngModel]="editTag()" (ngModelChange)="editTag.set($event)" placeholder="Nombre de la nueva etiqueta" aria-label="Nueva etiqueta" maxlength="30">
+            }
+            @if (editHasSecrets()) {
+              <p class="secret-warning" role="alert">
+                🔒 Esta nota parece contener contraseñas o claves. Recuerda que todos los usuarios con acceso a la app pueden leer las notas.
+              </p>
+            }
+            <textarea [ngModel]="editContent()" (ngModelChange)="editContent.set($event)" class="edit-content-textarea" placeholder="Escribe tu contenido aquí..."></textarea>
+          } @else if (aiPreview() !== null) {
+            <h2 class="modal-title">{{ note.title }}</h2>
+            <p class="ai-hint">✨ Propuesta de la IA. Revísala: lo marcado como [REVISAR] necesita tu confirmación. Nada se guarda hasta que presiones Guardar.</p>
+            @if (aiRedacted() > 0) {
+              <p class="ai-hint">🔒 Se ocultaron {{ aiRedacted() }} dato(s) sensible(s) (contraseñas, tokens o IPs) antes de enviar la nota a la IA; en la propuesta ya están restaurados.</p>
+            }
+            <div class="compare">
+              <section class="compare-col">
+                <h3>Original</h3>
+                <p class="modal-text">{{ note.content }}</p>
+              </section>
+              <section class="compare-col proposal">
+                <h3>Propuesta</h3>
+                <p class="modal-text">{{ aiPreview() }}</p>
+              </section>
+            </div>
+            <div class="compare-actions">
+              <button class="icon-btn" (click)="discardAiPreview()">Descartar</button>
+              <button class="icon-btn save-btn" (click)="applyAiPreview()">Aplicar y editar</button>
+            </div>
           } @else {
             <div>
-              <h2 class="modal-title">{{ selectedNote.title }}</h2>
-              <span class="tag-pill large-pill">{{ selectedNote.tag }}</span>
+              <h2 class="modal-title">{{ note.title }}</h2>
+              <span class="tag-pill large-pill">{{ note.tag }}</span>
             </div>
-            <p class="modal-text">{{ selectedNote.content }}</p>
+            <p class="modal-text">{{ note.content }}</p>
           }
         </div>
 

@@ -99,7 +99,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 25px;
-  min-height: 770px;
+  min-height: 300px;
   align-content: start;
 }
 
@@ -155,7 +155,6 @@ h1 {
   overflow: hidden !important; /* Bloquea los scrollbars */
   text-overflow: ellipsis; /* Agrega los puntos suspensivos ... */
 }
-/* (Eliminamos las clases ::-webkit-scrollbar que causaban el problema) */
 
 
 /* --- MODAL --- */
@@ -174,7 +173,8 @@ h1 {
   background: #ffffff;
   width: 100%;
   max-width: 800px;
-  height: 85vh;
+  max-height: 90vh;
+  min-height: min(520px, 90vh);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -192,11 +192,21 @@ h1 {
 
 .modal-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12px;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 6px;
 }
 
 .modal-body {
   padding: 30px;
+  min-height: 0;
   overflow-y: auto;
   flex-grow: 1;
   display: flex;
@@ -205,18 +215,6 @@ h1 {
 
 .modal-title { margin-top: 0; font-size: 2.2rem; color: #0f172a; margin-bottom: 20px; }
 .modal-text { white-space: pre-wrap; line-height: 1.7; color: #334155; font-size: 1.1rem; }
-
-.modal-title-group {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.modal-title-group h2 {
-  margin-bottom: 0;
-}
-
 
 /* --- BOTONES Y OTROS ELEMENTOS --- */
 .no-results {
@@ -251,6 +249,8 @@ h1 {
 .close-btn:hover { background: #fee2e2; }
 
 .edit-title-input {
+  box-sizing: border-box;
+  font-family: inherit;
   font-size: 2.2rem;
   font-weight: bold;
   border: 2px solid #cbd5e1;
@@ -264,6 +264,7 @@ h1 {
 
 .edit-content-textarea {
   flex-grow: 1;
+  min-height: 260px;
   font-size: 1.1rem;
   border: 2px solid #cbd5e1;
   border-radius: 8px;
@@ -271,6 +272,7 @@ h1 {
   resize: none;
   line-height: 1.7;
   width: 100%;
+  box-sizing: border-box;
   font-family: inherit;
   outline: none;
 }
@@ -278,6 +280,10 @@ h1 {
 
 .upload-section {
   margin-top: 25px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
 }
 
 .upload-btn {
@@ -290,6 +296,9 @@ h1 {
   display: inline-block;
   transition: all 0.2s ease;
   border: 2px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .upload-btn:hover {
@@ -324,23 +333,6 @@ h1 {
 }
 
 
-/* --- ESTILOS DE ETIQUETAS (TAGS) --- */
-.upload-group {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.tag-input {
-  padding: 10px 15px;
-  border: 2px solid #e2e8f0;
-  border-radius: 30px;
-  outline: none;
-  font-size: 14px;
-}
-
 .tag-pill {
   background-color: #e0e7ff;
   color: #4338ca;
@@ -358,6 +350,9 @@ h1 {
 }
 
 .edit-tag-input {
+  box-sizing: border-box;
+  background: #fff;
+  font-family: inherit;
   font-size: 1rem;
   border: 2px solid #cbd5e1;
   border-radius: 8px;
@@ -377,40 +372,6 @@ h1 {
 .clickable-tag:hover {
   transform: scale(1.05);
   background-color: #c7d2fe;
-}
-
-.active-filter-banner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  background-color: #e0e7ff;
-  color: #4338ca;
-  padding: 10px 20px;
-  border-radius: 30px;
-  width: fit-content;
-  margin: 25px auto 0 auto;
-  font-size: 0.95rem;
-  animation: fadeIn 0.3s ease;
-}
-
-.clear-filter-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 2px;
-  border-radius: 50%;
-  transition: transform 0.2s;
-}
-
-.clear-filter-btn:hover {
-  transform: scale(1.2);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .pagination-controls {
@@ -511,7 +472,8 @@ h1 {
   background: #475569;
 }
 
-.dark-mode .tag-input,
+.dark-mode .field-label { color: #94a3b8; }
+
 .dark-mode .edit-tag-input {
   background: #0f172a;
   color: #f8fafc;
@@ -529,11 +491,6 @@ h1 {
 
 .dark-mode .clickable-tag:hover {
   background-color: #3730a3;
-}
-
-.dark-mode .active-filter-banner {
-  background-color: #312e81;
-  color: #c7d2fe;
 }
 
 .dark-mode .pagination-controls {
@@ -564,3 +521,107 @@ h1 {
   color: #c7d2fe;
   border-color: #6366f1;
 }
+
+/* --- RESPONSIVE --- */
+@media (max-width: 600px) {
+  .container { padding: 20px 12px; }
+  .header-top { flex-direction: column; gap: 12px; }
+  .header-actions { flex-wrap: wrap; justify-content: center; }
+  .modal-content { max-height: 94vh; }
+  .upload-section { flex-direction: column; align-items: stretch; text-align: center; }
+  .modal-body { padding: 18px; }
+  .modal-title, .edit-title-input { font-size: 1.6rem; }
+}
+
+mark {
+  background: #fde68a;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.dark-mode mark {
+  background: #854d0e;
+  color: #fef3c7;
+}
+
+/* --- ASISTENTE DE IA --- */
+.ai-btn {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.ai-btn:hover:not(:disabled) { background: #ddd6fe; }
+.ai-btn:disabled { opacity: 0.6; cursor: wait; }
+
+.ai-hint {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.compare-col {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-y: auto;
+  max-height: 50vh;
+}
+
+.compare-col.proposal {
+  border-color: #a78bfa;
+  background: #faf5ff;
+}
+
+.compare-col h3 {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.compare .modal-text { font-size: 0.95rem; margin: 0; }
+
+.compare-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.dark-mode .ai-btn { background: #4c1d95; color: #ddd6fe; }
+.dark-mode .ai-btn:hover:not(:disabled) { background: #5b21b6; }
+.dark-mode .ai-hint { background: #2e1065; color: #ddd6fe; }
+.dark-mode .compare-col { border-color: #334155; }
+.dark-mode .compare-col.proposal { border-color: #7c3aed; background: #1e1b4b; }
+.dark-mode .compare-col h3 { color: #94a3b8; }
+
+@media (max-width: 700px) {
+  .compare { grid-template-columns: 1fr; }
+  .compare-col { max-height: 35vh; }
+}
+
+.secret-warning {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.dark-mode .secret-warning { background: #451a03; color: #fde68a; }
